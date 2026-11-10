@@ -31,27 +31,14 @@ class PipelineModules:
     cfg: DictConfig
     datamodule: LightningDataModule
     model: LightningModule
-    # We use the plural form to match the names used by lightning
+    # Lightningの引数名に合わせて複数形を使う。
     callbacks: list[Callback]
     loggers: list[Logger]
     trainer: Trainer
 
 
-def update_cfg_with_most_recent_checkpoint_path(cfg: DictConfig) -> str:
-    """
-    Updates the configuration with the most recent checkpoint path if the job is a retry, a checkpoint callback exists,
-    and a checkpoint file is found.
-
-    This function is useful for resuming training from the most recent checkpoint when a job is restarted.
-    It checks if the current run is part of a retry (using restart metadata), and if so, it looks for the
-    most recently modified checkpoint file in the checkpoint directory to use instead of the initial checkpoint.
-
-    Args:
-        cfg (DictConfig): The configuration dictionary containing training parameters.
-
-    Returns:
-        DictConfig: The updated configuration dictionary with the most recent checkpoint path.
-    """
+def update_cfg_with_most_recent_checkpoint_path(cfg: DictConfig) -> DictConfig:
+    """再試行時や明示された探索先から、最新のチェックポイントを設定する。"""
 
     ckpt_path = cfg.get("ckpt_path", None)
 
@@ -60,13 +47,11 @@ def update_cfg_with_most_recent_checkpoint_path(cfg: DictConfig) -> str:
         and has_no_extension(ckpt_path)
         and cfg.get("should_retrieve_latest_ckpt_path", False)
     ):
-        # If a path to a folder is passed, we assume it contains folders with versions of checkpoints.
-        # We expect those folders to be named using a timestamp.
+        # 探索先の直下に時刻名のチェックポイントフォルダーが並ぶ構成を想定する。
         checkpoint_folders = list_subfolders(ckpt_path)
         if len(checkpoint_folders) > 0:
-            # We sort them in reverse order to get the most recent one.
+            # 時刻名の降順で最新の保存先を選ぶ。
             checkpoint_folders.sort(reverse=True)
-            # We take the first one, which is the most recent one.
             latest_ckpt_folder = checkpoint_folders[0]
             last_modified = get_last_modified_file(
                 folder_path=latest_ckpt_folder, suffix="*.ckpt"
@@ -74,30 +59,29 @@ def update_cfg_with_most_recent_checkpoint_path(cfg: DictConfig) -> str:
             if len(last_modified) > 0:
                 ckpt_path = last_modified
                 command_line_logger.info(
-                    f"Found most recent checkpoint path: {ckpt_path}. Starting job from this checkpoint."
+                    f"最新のチェックポイントから再開します: {ckpt_path}"
                 )
 
-    # If there is a checkpoint callback running, and the restart_metadata file shows we are not on the first run,
-    # we check if there are checkpoints in the checkpoint folder and restart from there instead of the initial checkpoint.
+    # 再試行では、初期指定よりも同じ実験の直近チェックポイントを優先する。
     if (
-        cfg.get("callbacks")  # has callbacks
-        and cfg.callbacks.get("model_checkpoint")  # has checkpoint callback
-        and cfg.callbacks.get("restart_job")  # has retry callback
+        cfg.get("callbacks")
+        and cfg.callbacks.get("model_checkpoint")
+        and cfg.callbacks.get("restart_job")
         and get_attribute_from_metadata_file(
             f"{cfg.callbacks.restart_job.metadata_dir}/restart_metadata.json",
             "current_run",
         )
-        > 0  # current run is part of a retry
+        > 0
     ):
         checkpoint_folder = cfg.callbacks.model_checkpoint.dirpath
-        # We check if there are files with the extension .ckpt in the checkpoint folder. If so, we get the latest one.
+        # 同じ保存先にあるckptファイルを更新日時で比較する。
         last_modified = get_last_modified_file(
             folder_path=checkpoint_folder, suffix="*.ckpt"
         )
         if len(last_modified) > 0:
             ckpt_path = last_modified
             command_line_logger.info(
-                f"Found most recent checkpoint path: {ckpt_path}. Starting job from this checkpoint."
+                f"最新のチェックポイントから再開します: {ckpt_path}"
             )
 
     cfg.ckpt_path = ckpt_path
@@ -107,17 +91,9 @@ def update_cfg_with_most_recent_checkpoint_path(cfg: DictConfig) -> str:
 def initialize_pipeline_modules(
     cfg: DictConfig,
 ) -> PipelineModules:
-    """
-    Initialize and instantiate various objects required for running pipelines.
-
-    Args:
-        cfg (DictConfig): Configuration object containing parameters for data, model, callbacks, logger, and trainer.
-
-    Returns:
-        PipelineModules: A dataclass containing the instantiated objects.
-    """
-    # set seed for random number generators in pytorch, numpy and python.random
-    if cfg.get("seed"):
+    """設定からデータ・モデル・コールバック・ロガー・Trainerを構築する。"""
+    # PyTorch・NumPy・標準randomのシードを揃える。0も有効な値として扱う。
+    if cfg.get("seed") is not None:
         L.seed_everything(cfg.seed, workers=True)
 
     command_line_logger.info(
@@ -143,11 +119,7 @@ def initialize_pipeline_modules(
     trainer: Trainer = hydra.utils.instantiate(
         cfg.trainer,
         callbacks=callbacks,
-        # The default behavior for lightning it to set `enable_checkpointing` and
-        # `enable_model_summary` to True, which might be misleading when we are trying to
-        # debug. We change the default to False, but this can be overriden by either
-        # setting the parameters in the config file or passing the callbacks as part
-        # of the callbacks yaml.
+        # 設定で明示しない限り、対応するコールバックがある機能だけを有効にする。
         enable_checkpointing=cfg.trainer.get(
             "enable_checkpointing",
             has_class_object_inside_list(callbacks, ModelCheckpoint),
@@ -173,29 +145,25 @@ def initialize_pipeline_modules(
 
 @contextmanager
 def pipeline_launcher(cfg: DictConfig):
-    """
-    Launches the pipeline with the given configuration and logger.
-    Args:
-        cfg (DictConfig): Configuration object containing pipeline settings.
-        log (RankedLogger): Logger object for logging information.
-    Yields:
-        PipelineModules: A dataclass containing the instantiated objects.
-    Raises:
-        Exception: Propagates any exception that occurs during pipeline initialization.
-    Notes:
-        - If the configuration contains a logger, hyperparameters will be logged.
-        - Ensures that loggers are finalized and profiler output is saved even if the task fails.
-    """
-
+    """実行資源を用意し、失敗時も元の例外を保ってロガーを終了する。"""
+    modules = None
+    failed = False
     try:
-        pipeline_modules: PipelineModules = initialize_pipeline_modules(cfg)
-        # Log hyperparameters if loggers are present
-        if len(pipeline_modules.loggers) > 0:
-            command_line_logger.info("Logging hyperparameters!")
-            log_hyperparameters(cfg, pipeline_modules.model, pipeline_modules.trainer)
-        yield pipeline_modules
-    except Exception as ex:
-        raise ex
+        modules = initialize_pipeline_modules(cfg)
+        if modules.loggers:
+            log_hyperparameters(cfg, modules.model, modules.trainer)
+        yield modules
+    except BaseException:
+        failed = True
+        raise
     finally:
-        # We add the try catch to make sure the loggers are finalized even if the task fails.
-        finalize_loggers(pipeline_modules.trainer)
+        if modules is not None:
+            try:
+                finalize_loggers(modules.trainer)
+            except Exception:
+                # 後処理の失敗で学習・推論の元の例外を隠さない。
+                if not failed:
+                    raise
+                command_line_logger.exception(
+                    "例外発生後のロガー終了処理にも失敗しました"
+                )
