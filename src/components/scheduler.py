@@ -42,7 +42,7 @@ class WarmupCosineSchedulerNonzeroMin(torch.optim.lr_scheduler.LambdaLR):
         self.scheduler_steps = scheduler_steps
         self.min_ratio = min_ratio
         self.num_cycles = num_cycles
-        super(WarmupCosineSchedulerNonzeroMin, self).__init__(
+        super().__init__(
             optimizer, self.lr_lambda, last_epoch=last_epoch
         )
 

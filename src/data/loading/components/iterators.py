@@ -1,8 +1,7 @@
 import os
 import random
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List
-
+from collections.abc import Callable
 
 from src.utils.decorators import retry
 from src.utils.file_utils import open_pyarrow_file
@@ -33,7 +32,7 @@ class RawDataIterator(ABC):
         self.list_of_file_paths = None
         self.should_shuffle_rows = None
 
-    def update_list_of_file_paths(self, list_of_file_paths: List[str]):
+    def update_list_of_file_paths(self, list_of_file_paths: list[str]):
         self.list_of_file_paths = list_of_file_paths
 
     @abstractmethod
@@ -80,7 +79,7 @@ class ParquetDataIterator(RawDataIterator):
             for row in batch.to_pylist():
                 yield row
 
-    def iter_batches(self, batch_size: int) -> Dict[str, tf.Tensor]:  # type: ignore
+    def iter_batches(self, batch_size: int) -> dict[str, tf.Tensor]:  # type: ignore
         assert self.list_of_file_paths is not None, "list_of_file_paths is not set"
         for file_path in self.list_of_file_paths:
             with open_pyarrow_file(file_path) as f:
@@ -117,7 +116,7 @@ class TFRecordIterator(RawDataIterator):
     def __init__(
         self,
         use_ragged_tensor: bool = False,
-        batch_tf_processing_functions: List[Callable] = [],
+        batch_tf_processing_functions: list[Callable] = [],
         should_drop_last_batch: bool = True,
         **kwargs,
     ):
@@ -159,7 +158,7 @@ class TFRecordIterator(RawDataIterator):
             yield example
             curr_example = self._get_next_example(dataset_iterator)
 
-    def iter_batches(self, batch_size: int) -> Dict[str, tf.Tensor]:  # type: ignore
+    def iter_batches(self, batch_size: int) -> dict[str, tf.Tensor]:  # type: ignore
         assert self.list_of_file_paths is not None, "list_of_file_paths is not set"
         raw_dataset = tf.data.TFRecordDataset(
             self.list_of_file_paths, compression_type="GZIP"

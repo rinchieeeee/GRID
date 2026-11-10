@@ -1,9 +1,9 @@
-from typing import Optional
 
 import torch
 
+
 def create_last_k_mask(
-    sequence_length: int, last_item_index: torch.Tensor, last_k: Optional[int] = None
+    sequence_length: int, last_item_index: torch.Tensor, last_k: int | None = None
 ) -> torch.tensor:
     """
     Creates a mask to select the last K items of sequences.

@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import List
 
 import hydra
 import lightning as L
@@ -33,8 +32,8 @@ class PipelineModules:
     datamodule: LightningDataModule
     model: LightningModule
     # We use the plural form to match the names used by lightning
-    callbacks: List[Callback]
-    loggers: List[Logger]
+    callbacks: list[Callback]
+    loggers: list[Logger]
     trainer: Trainer
 
 
@@ -132,10 +131,10 @@ def initialize_pipeline_modules(
     model: LightningModule = hydra.utils.instantiate(cfg.model)
 
     command_line_logger.info("Instantiating callbacks...")
-    callbacks: List[Callback] = instantiate_callbacks(cfg.get("callbacks"))
+    callbacks: list[Callback] = instantiate_callbacks(cfg.get("callbacks"))
 
     command_line_logger.info("Instantiating loggers...")
-    loggers: List[Logger] = instantiate_loggers(cfg.get("logger"))
+    loggers: list[Logger] = instantiate_loggers(cfg.get("logger"))
 
     command_line_logger.info(f"Instantiating trainer <{cfg.trainer._target_}>")
 

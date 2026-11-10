@@ -1,10 +1,10 @@
 import json
 import os
 from importlib.util import find_spec
-from typing import Any, Dict
+from typing import Any
 
 from dotenv import load_dotenv
-from lightning import Callback, LightningDataModule, LightningModule, Trainer
+from lightning import LightningModule, Trainer
 from lightning_utilities.core.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
 

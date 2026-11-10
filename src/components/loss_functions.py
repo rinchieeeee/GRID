@@ -1,7 +1,8 @@
+
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple, Union, Dict
+from torch import nn
+
 
 class FullBatchCrossEntropyLoss(nn.Module):
     """
@@ -76,7 +77,7 @@ class WeightedSquaredError(torch.nn.Module):
         super().__init__()
 
     def forward(
-        self, x: torch.Tensor, y: torch.Tensor, weights: Optional[torch.Tensor] = None
+        self, x: torch.Tensor, y: torch.Tensor, weights: torch.Tensor | None = None
     ) -> torch.Tensor:
         """
         Compute the weighted squared error loss.

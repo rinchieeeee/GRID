@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+
 import torch
 
 
@@ -16,7 +16,6 @@ class DistanceFunction(ABC):
         Returns:
             Distances of shape (n1, n2)
         """
-        pass
 
 
 class SquaredEuclideanDistance(DistanceFunction):
@@ -41,7 +40,7 @@ class SquaredEuclideanDistance(DistanceFunction):
         """
         assert x.dim() == 2, f"Data must be 2D, got {x.dim()} dimensions"
         assert y.dim() == 2, f"Data must be 2D, got {y.dim()} dimensions"
-        assert x.size(1) == y.size(1), f"Data must have the same number of columns"
+        assert x.size(1) == y.size(1), "Data must have the same number of columns"
 
         n1, d = x.shape
         n2, _ = y.shape
@@ -87,7 +86,7 @@ class WeightedSquaredError(torch.nn.Module):
         super().__init__()
 
     def forward(
-        self, x: torch.Tensor, y: torch.Tensor, weights: Optional[torch.Tensor] = None
+        self, x: torch.Tensor, y: torch.Tensor, weights: torch.Tensor | None = None
     ) -> torch.Tensor:
         """
         Compute the weighted squared error loss.

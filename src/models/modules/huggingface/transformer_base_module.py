@@ -1,4 +1,3 @@
-from typing import Dict, Optional, Tuple
 
 import torch
 import transformers
@@ -29,7 +28,7 @@ class TransformerBaseModule(BaseModule):
         weight_tying: bool,
         compile: bool,
         training_loop_function: callable = None,
-        feature_to_model_input_map: Dict[str, str] = {},
+        feature_to_model_input_map: dict[str, str] = {},
         decoder: torch.nn.Module = None,
     ) -> None:
 
@@ -71,7 +70,7 @@ class TransformerBaseModule(BaseModule):
 
     def training_step(
         self,
-        batch: Tuple[Tuple[SequentialModelInputData, SequentialModuleLabelData]],
+        batch: tuple[tuple[SequentialModelInputData, SequentialModuleLabelData]],
         batch_idx: int,
     ) -> torch.Tensor:
         """Perform a single training step on a batch of data from the training set.
@@ -115,7 +114,7 @@ class TransformerBaseModule(BaseModule):
 
     def eval_step(
         self,
-        batch: Tuple[SequentialModelInputData, SequentialModuleLabelData],
+        batch: tuple[SequentialModelInputData, SequentialModuleLabelData],
         loss_to_aggregate: BaseAggregator,
     ):
         """Perform a single evaluation step on a batch of data from the validation or test set.
@@ -148,7 +147,7 @@ class TransformerBaseModule(BaseModule):
 
     def predict_step(
         self,
-        batch: Tuple[SequentialModelInputData, SequentialModuleLabelData],
+        batch: tuple[SequentialModelInputData, SequentialModuleLabelData],
         batch_idx: int,
     ):
         """Perform a single prediction step on a batch of data from the test set.

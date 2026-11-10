@@ -1,15 +1,16 @@
 import warnings
+from functools import partial
 from time import sleep
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import torch
+import torch.nn.functional as F
 from omegaconf import DictConfig
+from tokenizers.processors import TemplateProcessing
 from transformers.cache_utils import DynamicCache
 
-from src.utils import pylogger, rich_utils
-from functools import partial
-from tokenizers.processors import TemplateProcessing
 from src.data.loading.components.interfaces import TokenizerConfig
+from src.utils import pylogger, rich_utils
 
 log = pylogger.RankedLogger(__name__, rank_zero_only=True)
 
@@ -26,7 +27,8 @@ def print_warnings_for_missing_configs(cfg: DictConfig) -> None:
     for config in _DEFAULT_CONFIGS:
         if not cfg.get(config):
             log.warning(
-                f"Config {config} was not found in the config tree. Make sure this is expected."
+                f"Config {config} was not found in the config tree."
+                "Make sure this is expected."
             )
             has_warnings = True
     if has_warnings:
@@ -83,7 +85,7 @@ def delete_module(module: torch.nn.Module, module_name: str) -> None:
 
 def find_module_shape(
     module: torch.nn.Module, module_name: str
-) -> Optional[torch.Size]:
+) -> torch.Size | None:
     """Recursively find a submodule in a module and return its shape.
 
     :param module: the parent module that we want the submodule to be removed from.
@@ -114,7 +116,7 @@ def reset_parameters(module: torch.nn.Module) -> None:
             reset_parameters(layer)
 
 
-def get_var_if_not_none(value: Optional[Any], default_value: Any) -> Any:
+def get_var_if_not_none(value: Any | None, default_value: Any) -> Any:
     """
     :return: value if value is not None, else default_value
     Note that when value is:
@@ -150,7 +152,7 @@ def has_class_object_inside_list(obj_list: list, class_type: Any) -> bool:
 
 
 def convert_legacy_kv_cache_to_dynamic(
-    kv_cache: Union[DynamicCache, Tuple[torch.Tensor]]
+    kv_cache: DynamicCache | tuple[torch.Tensor]
 ) -> DynamicCache:
     """
     Converts a legacy key-value cache (Tuple of tensors) to a dynamic cache.
@@ -169,7 +171,7 @@ def convert_legacy_kv_cache_to_dynamic(
 
 def get_parent_module_and_attr(
     model: torch.nn.Module, module_name: str
-) -> Tuple[torch.nn.Module, str]:
+) -> tuple[torch.nn.Module, str]:
     """
     Get the parent module and attribute name for a given module name.
 
@@ -192,8 +194,9 @@ def lightning_precision_to_dtype(precision: str) -> torch.dtype:
     Convert Lightning precision identifier to PyTorch dtype.
 
     Args:
-        precision (str): The precision identifier used in Lightning.
-                         Expected values include '32', '32-true', '16', '16-mixed', 'bf16', '64', 'half'.
+        precision (str):The precision identifier used in Lightning.
+                        Expected values include '32', '32-true', '16', 
+                        '16-mixed', 'bf16', '64', 'half'.
 
     Returns:
         torch.dtype: The corresponding PyTorch dtype.
@@ -217,7 +220,8 @@ def lightning_precision_to_dtype(precision: str) -> torch.dtype:
     else:
         raise ValueError(
             f"Unsupported precision type: '{precision}'. "
-            "Supported precision types are: '32', '32-true', '64', '16', '16-mixed', 'bf16', 'half'."
+            "Supported precision types are: '32', '32-true', "
+            "'64', '16', '16-mixed', 'bf16', 'half'."
         )
 
 def load_tokenize(config: TokenizerConfig) -> Any:
@@ -240,7 +244,7 @@ def load_tokenize(config: TokenizerConfig) -> Any:
     )
     return tokenize
 
-def sample_gumbel(shape: Tuple, device: torch.device, eps=1e-20) -> torch.Tensor:
+def sample_gumbel(shape: tuple, device: torch.device, eps=1e-20) -> torch.Tensor:
     """Sample from Gumbel(0, 1)"""
     U = torch.rand(shape, device=device)
     return -torch.log(-torch.log(U + eps) + eps)

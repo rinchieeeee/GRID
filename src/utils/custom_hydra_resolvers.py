@@ -1,6 +1,5 @@
 import ast
 import operator as op
-from typing import Optional
 
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
@@ -85,7 +84,7 @@ def extract_fields_from_list_of_dicts(
 
 
 def create_map_from_list_of_dicts(
-    list_of_dicts: ListConfig, key: str, value: Optional[str] = None
+    list_of_dicts: ListConfig, key: str, value: str | None = None
 ) -> DictConfig:
     """
     Creates a dictionary from a list of dictionaries based on the key and value.

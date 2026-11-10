@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from src.models.components.network_blocks.aggregation_strategy import (
     AggregationStrategy,
@@ -19,7 +19,7 @@ class EmbeddingAggregator(nn.Module):
         self,
         aggregation_strategy: AggregationStrategy,
     ):
-        super(EmbeddingAggregator, self).__init__()
+        super().__init__()
         self.aggregation_strategy = aggregation_strategy
 
     def forward(

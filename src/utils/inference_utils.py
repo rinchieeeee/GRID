@@ -2,18 +2,16 @@ import datetime
 import logging
 import os
 import pickle
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 import torch
 from google.cloud import bigquery
-
 from lightning import LightningModule, Trainer
 from lightning.pytorch.callbacks import BasePredictionWriter
 
 from src.models.components.interfaces import ModelOutput
-from src.utils.decorators import RetriesFailedException, retry
+from src.utils.decorators import retry
 from src.utils.tensor_utils import merge_list_of_keyed_tensors_to_single_tensor
 
 log = logging.getLogger(__name__)
@@ -25,9 +23,9 @@ class BaseBufferedWriter(BasePredictionWriter):
         # Update this based on data size. The goal is to limit the number of writes to BQ without exceeding the memory of your machine.
         flush_frequency: int = 5000,
         write_interval: str = "batch",
-        schema: Optional[List[Union[bigquery.SchemaField, pa.Field]]] = None,
-        prediction_key_name: Optional[str] = None,
-        prediction_name: Optional[str] = None,
+        schema: list[bigquery.SchemaField | pa.Field] | None = None,
+        prediction_key_name: str | None = None,
+        prediction_name: str | None = None,
     ):
         """
         Args:
@@ -44,7 +42,7 @@ class BaseBufferedWriter(BasePredictionWriter):
         super().__init__(write_interval)
         self.flush_frequency = flush_frequency
         # Buffer to accumulate rows before writing
-        self.rows_buffer: List[dict] = []
+        self.rows_buffer: list[dict] = []
         self.schema = schema
         self.global_rank = None
         self.prediction_key_name = prediction_key_name
@@ -100,7 +98,7 @@ class BaseBufferedWriter(BasePredictionWriter):
             log.warning(
                 f"Rank {self.global_rank} received an empty model output. Skipping this batch. This is expected if the batch is a dummy batch."
             )
-            return None
+            return
         rows = model_output.list_of_row_format
 
         if len(rows) + len(self.rows_buffer) < self.flush_frequency:
@@ -116,7 +114,7 @@ class BaseBufferedWriter(BasePredictionWriter):
         trainer: Trainer,
         pl_module: LightningModule,
         prediction: ModelOutput,
-        batch_indices: List[int],
+        batch_indices: list[int],
         batch: Any,
         batch_idx: int,
         dataloader_idx: int,
@@ -132,8 +130,8 @@ class BaseBufferedWriter(BasePredictionWriter):
         self,
         trainer: Trainer,
         pl_module: LightningModule,
-        predictions: List[ModelOutput],
-        batch_indices: List[List[int]],
+        predictions: list[ModelOutput],
+        batch_indices: list[list[int]],
     ) -> None:
         """
         Called at the end of a prediction epoch.
@@ -176,7 +174,7 @@ class LocalPickleWriter(BaseBufferedWriter):
         write_interval: str = "batch",
         should_merge_files_on_main: bool = True,
         should_merge_list_of_keyed_tensors_to_single_tensor: bool = True,
-        post_processing_functions: Optional[List[Dict[str, callable]]] = [],
+        post_processing_functions: list[dict[str, callable]] | None = [],
         **kwargs,
     ):
         """
@@ -202,9 +200,9 @@ class LocalPickleWriter(BaseBufferedWriter):
 
     def _create_file_path(self) -> str:
         """Create a file path for the pickle file."""
-        return f"predictions_{self.global_rank}_{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%f')[:-3]}.pkl"
+        return f"predictions_{self.global_rank}_{datetime.datetime.now(datetime.UTC).strftime('%Y%m%dT%H%M%S%f')[:-3]}.pkl"
 
-    def _local_file_path(self, file_path: Optional[str] = None) -> str:
+    def _local_file_path(self, file_path: str | None = None) -> str:
         """Create a local file path for the pickle file."""
         return (
             f"{self.output_dir}/{file_path if file_path else self._create_file_path()}"

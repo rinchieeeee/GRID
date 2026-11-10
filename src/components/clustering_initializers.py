@@ -1,9 +1,8 @@
 from abc import abstractmethod
-from functools import partial
 
 import torch
-import torch.nn as nn
 from pytorch_lightning import LightningModule
+from torch import nn
 
 from src.components.distance_functions import DistanceFunction
 
@@ -38,7 +37,6 @@ class ClusteringInitializer(nn.Module):
         Returns:
             Initialized centroids of shape (n_clusters, n_features)
         """
-        pass
 
 
 class RandomInitializer(ClusteringInitializer):

@@ -2,8 +2,9 @@
 import gzip
 import json
 import struct
-from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
 
 def count_file(p):
     count = 0

@@ -1,5 +1,3 @@
-import copy
-from typing import Any, List, Optional
 
 from torch.utils.data import IterableDataset, get_worker_info
 
@@ -40,7 +38,7 @@ class BaseDataset:
         self.is_for_training = is_for_training
         self.assign_all_files_per_worker = assign_all_files_per_worker
 
-    def set_list_of_files(self, list_of_files: List[str]):
+    def set_list_of_files(self, list_of_files: list[str]):
         self.list_of_file_paths = list_of_files
 
     def set_distributed_params(self, total_workers: int, global_worker_id: int):
@@ -160,7 +158,6 @@ class UnboundedSequenceIterable(BaseDataset, IterableDataset):
         # We reset the dataset to iterate to None, so that it is set up again in the next iteration.
         # This is required for validation when persitent_workers = True.
         self.dataset_to_iterate = None
-        return None
 
 
 class FiniteSequenceIterable(UnboundedSequenceIterable):

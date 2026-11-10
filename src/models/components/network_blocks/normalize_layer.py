@@ -1,5 +1,5 @@
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class NormalizeLayer(nn.Module):
@@ -14,7 +14,7 @@ class NormalizeLayer(nn.Module):
             dim (int): The dimension along which to normalize. Default is -1 (last dimension).
             p (float): The norm degree. Default is 2 (L2 normalization).
         """
-        super(NormalizeLayer, self).__init__()
+        super().__init__()
         self.dim = dim
         self.p = p
 

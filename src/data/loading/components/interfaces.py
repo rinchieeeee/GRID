@@ -1,6 +1,4 @@
-import abc
-from dataclasses import dataclass, field, fields
-from typing import Any, Dict, List, Optional, Union
+from dataclasses import dataclass, field
 
 import torch
 import transformers
@@ -74,10 +72,10 @@ class SequenceDatasetConfig(BaseDatasetConfig):
     preprocessing_functions: list[callable]  # type: ignore
     iterate_per_row: bool = False
     keep_user_id: bool = False
-    num_placeholder_tokens_map: Optional[dict] = field(default_factory=dict)
-    field_type_map: Optional[dict] = field(default_factory=dict)
+    num_placeholder_tokens_map: dict | None = field(default_factory=dict)
+    field_type_map: dict | None = field(default_factory=dict)
     min_sequence_length: int = 10
-    feature_map: Optional[dict] = None
+    feature_map: dict | None = None
     features_to_consider: list[str] = field(default_factory=list)
     file_format: str = None
 
@@ -140,8 +138,8 @@ class SequenceDataloaderConfig(BaseDataloaderConfig):
     assign_files_by_size: bool
     masking_token: int
     collate_fn: callable  # type: ignore
-    labels: Dict[str, callable] = field(default_factory=dict)  # type: ignore
-    oov_token: Optional[int] = -1
+    labels: dict[str, callable] = field(default_factory=dict)  # type: ignore
+    oov_token: int | None = -1
     sequence_length: int = 200
     padding_token: int = 0
     drop_last: bool = True
@@ -189,9 +187,9 @@ class SequentialModuleLabelData:
         Label location tensor is the shape of mask_size, 2 as it contains coordinates # long tensor
     """
 
-    labels: Dict[str, torch.Tensor] = field(default_factory=dict)
-    label_location: Dict[str, torch.Tensor] = field(default_factory=dict)
-    attention_mask: Dict[str, torch.Tensor] = field(default_factory=dict)
+    labels: dict[str, torch.Tensor] = field(default_factory=dict)
+    label_location: dict[str, torch.Tensor] = field(default_factory=dict)
+    attention_mask: dict[str, torch.Tensor] = field(default_factory=dict)
 
 
 @dataclass
@@ -210,8 +208,8 @@ class SequentialModelInputData:
         (batch_size_per_device x sequence length)
     """
 
-    user_id_list: Union[torch.Tensor, List[str], None] = None
-    transformed_sequences: Dict[str, torch.Tensor] = field(default_factory=dict)
+    user_id_list: torch.Tensor | list[str] | None = None
+    transformed_sequences: dict[str, torch.Tensor] = field(default_factory=dict)
     mask: torch.Tensor = (
         None  # Single mask if needed as all sequences are padded the same way.
     )
@@ -234,7 +232,7 @@ class SemanticIDDatasetConfig(SequenceDatasetConfig):
         will be included in the dataset and can be used for inference or evaluation.
     """
 
-    semantic_id_map: Optional[Dict[str, torch.Tensor]] = None
+    semantic_id_map: dict[str, torch.Tensor] | None = None
     keep_user_id: bool = False
 
 
@@ -264,9 +262,9 @@ class TokenizerConfig:
     max_length: int
     padding: str
     truncation: bool
-    special_tokens: Optional[Dict[str, str]] = field(default_factory=dict)
+    special_tokens: dict[str, str] | None = field(default_factory=dict)
     add_special_tokens: bool = True
-    postprocess_eos_token: Optional[bool] = False
+    postprocess_eos_token: bool | None = False
 
 
 @dataclass
@@ -305,11 +303,11 @@ class ItemDatasetConfig(BaseDatasetConfig):
     data_iterator: RawDataIterator
     iterate_per_row: bool = True
     keep_item_id: bool = True
-    features_to_consider: Optional[List[str]] = None
-    feature_map: Optional[Dict[str, str]] = None
-    field_type_map: Optional[Dict] = None
-    embedding_map: Optional[Dict[str, torch.Tensor]] = None
-    num_placeholder_tokens_map: Optional[Dict[str, int]] = None
+    features_to_consider: list[str] | None = None
+    feature_map: dict[str, str] | None = None
+    field_type_map: dict | None = None
+    embedding_map: dict[str, torch.Tensor] | None = None
+    num_placeholder_tokens_map: dict[str, int] | None = None
 
 
 @dataclass
@@ -328,8 +326,8 @@ class ItemDataloaderConfig(BaseDataloaderConfig):
     should_shuffle_rows: bool = False
     persistent_workers: bool = False
     timeout: int = 0
-    oov_token: Optional[int] = 0
-    limit_files: Optional[int] = None
+    oov_token: int | None = 0
+    limit_files: int | None = None
     assign_all_files_per_worker: bool = False
 
 
@@ -345,8 +343,8 @@ class ItemData:
         The transformed features.
     """
 
-    item_ids: Union[torch.Tensor, List[str], None] = None
-    transformed_features: Dict[str, torch.Tensor] = field(default_factory=dict)
+    item_ids: torch.Tensor | list[str] | None = None
+    transformed_features: dict[str, torch.Tensor] = field(default_factory=dict)
 
 
 @dataclass
@@ -363,5 +361,5 @@ class ItemTextData(ItemData):
         The text masks.
     """
 
-    text_tokens: Optional[torch.Tensor] = None
-    text_masks: Optional[torch.Tensor] = None
+    text_tokens: torch.Tensor | None = None
+    text_masks: torch.Tensor | None = None

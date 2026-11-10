@@ -1,4 +1,3 @@
-from typing import List, Union
 
 import torch
 
@@ -14,7 +13,7 @@ class ModelOutput:
         """
         raise NotImplementedError
 
-    def _convert_to_list(self, prediction: Union[torch.Tensor, List]) -> List:
+    def _convert_to_list(self, prediction: torch.Tensor | list) -> list:
         """
         Convert the prediction to a list so it can be serialized.
         """

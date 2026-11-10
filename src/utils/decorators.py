@@ -2,8 +2,9 @@ import errno
 import os
 import signal
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Optional, Tuple, Type, TypeVar
+from typing import TypeVar
 
 from src.utils.pylogger import RankedLogger
 
@@ -76,13 +77,13 @@ def timeout(
 
 
 def retry(
-    exception_to_check: Type = Exception,
+    exception_to_check: type = Exception,
     tries: int = 5,
     delay_s: int = 3,
     backoff: int = 2,
-    max_delay_s: Optional[int] = None,
-    fn_execution_timeout_s: Optional[int] = None,
-    deadline_s: Optional[int] = None,
+    max_delay_s: int | None = None,
+    fn_execution_timeout_s: int | None = None,
+    deadline_s: int | None = None,
     should_throw_original_exception: bool = False,
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
@@ -120,7 +121,7 @@ def retry(
                     return timeout_individual_fn_call_decorator(f)(*args, **kwargs)
                 return f(*args, **kwargs)
 
-            acceptable_exceptions: Tuple[Type[Exception], ...] = (
+            acceptable_exceptions: tuple[type[Exception], ...] = (
                 exception_to_check
                 if isinstance(exception_to_check, tuple)
                 else (exception_to_check,)

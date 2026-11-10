@@ -1,5 +1,4 @@
-import os
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import hydra
 import rootutils
@@ -34,7 +33,7 @@ command_line_logger = RankedLogger(__name__, rank_zero_only=True)
 torch.set_float32_matmul_precision("medium")
 
 
-def train(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
     """Trains the model. Can additionally evaluate on a testset, using best weights obtained during
     training.
 
@@ -90,7 +89,7 @@ def train(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
 
 
 @hydra.main(version_base="1.3", config_path="../configs", config_name="train.yaml")
-def main(cfg: DictConfig) -> Optional[float]:
+def main(cfg: DictConfig) -> float | None:
     """Main entry point for training.
 
     :param cfg: DictConfig configuration composed by Hydra.

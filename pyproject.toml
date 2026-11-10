@@ -255,11 +255,15 @@ dependencies = [
     "zc-lockfile==3.0.post1",
     "zict==3.0.0",
     "zipp==3.23.0",
+    "ruff>=0.17.4",
 ]
 
 [tool.uv]
 package = false
 environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+
+[tool.ruff]
+select = ["E", "F", "I"]
 
 [[tool.uv.index]]
 name = "pytorch-cu128"

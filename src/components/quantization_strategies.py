@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
 
 import torch
 import torch.nn.functional as F
@@ -37,7 +36,7 @@ class QuantizationStrategy(ABC):
         self,
         codebook: torch.Tensor,
         batch: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Get the nearest neighbors of the batch in the codebook.
         This is used for the STE and rotation trick quantization strategies.
@@ -52,7 +51,7 @@ class QuantizationStrategy(ABC):
         codebook: torch.Tensor,
         batch: torch.Tensor,
         **kwargs,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Quantize the input batch using the specified quantization strategy.
 
@@ -78,7 +77,6 @@ class QuantizationStrategy(ABC):
                 that we can backpropagate through the quantization steps to obtain the
                 gradients for the encoder.
         """
-        pass
 
 
 class GumbelSoftmaxQuantization(QuantizationStrategy):
@@ -104,7 +102,7 @@ class GumbelSoftmaxQuantization(QuantizationStrategy):
         codebook: torch.Tensor,
         batch: torch.Tensor,
         **kwargs,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         dists = self.distance_function.compute(batch, codebook)
         weights = gumbel_softmax_sample(-dists, temperature=self.temperature)
         embeddings = weights @ codebook
@@ -119,7 +117,7 @@ class STEQuantization(QuantizationStrategy):
         codebook: torch.Tensor,
         batch: torch.Tensor,
         **kwargs,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Quantizes the input batch using the Straight-Through Estimator (STE).
 
@@ -193,7 +191,7 @@ class RotationTrickQuantization(QuantizationStrategy):
         codebook: torch.Tensor,
         batch: torch.Tensor,
         **kwargs,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Quantizes the input batch using the rotation trick: https://arxiv.org/abs/2410.06424
 

@@ -5,8 +5,9 @@ import sys
 import tempfile
 import time
 import traceback
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, TypeVar, Union
+from typing import Any, TypeVar
 
 from lightning import Trainer
 from lightning.pytorch.callbacks import Callback
@@ -58,7 +59,7 @@ class RestartAndLoadCheckpointCallback(Callback):
         ```
     """
 
-    def __init__(self, metadata_dir: Union[str, None] = None):
+    def __init__(self, metadata_dir: str | None = None):
         """
         Initialize the RestartAndLoadCheckpointCallback.
 
@@ -131,7 +132,7 @@ class RestartAndLoadCheckpointCallback(Callback):
     def _cleanup_resources(self, trainer: Trainer, exception: Exception) -> None:
         clean_up_resources(trainer, exception)
 
-        command_line_logger.info(f"Resources cleaned up.")
+        command_line_logger.info("Resources cleaned up.")
         os._exit(1)
 
 

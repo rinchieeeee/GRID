@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 import torch
 from torch import nn
@@ -11,7 +10,7 @@ class MLP(nn.Module):
         self,
         input_dim: int,
         output_dim: int,
-        hidden_dim_list: Optional[List[int]] = None,
+        hidden_dim_list: list[int] | None = None,
         activation: nn.Module = nn.ReLU,
         bias: bool = True,
         dropout: float = 0.0,

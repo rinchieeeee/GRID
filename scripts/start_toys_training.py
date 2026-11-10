@@ -1,10 +1,10 @@
 """Start durable TIGER training with the original config and max_epochs=100."""
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / 'artifacts/toys_original_100epochs'

@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 import hydra
 import rootutils
@@ -13,7 +13,7 @@ from src.utils.launcher_utils import pipeline_launcher
 command_line_logger = RankedLogger(__name__, rank_zero_only=True)
 
 
-def inference(cfg: DictConfig) -> Dict[str, Any]:
+def inference(cfg: DictConfig) -> dict[str, Any]:
     """Runs inference using a pre-trained model.
 
     :param cfg: A DictConfig configuration composed by Hydra.
