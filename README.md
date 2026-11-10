@@ -166,6 +166,17 @@ For questions and support:
 
 [4] Geng, Shijie, et al. "Recommendation as language processing (rlp): A unified pretrain, personalized prompt & predict paradigm (p5)." Proceedings of the 16th ACM conference on recommender systems. 2022.
 
+## 分析コードの使い方
+
+デバッグ、追加実験、Pythonからの個別実行、ログ集計の手順は
+[分析・追加実験ガイド](docs/experiments.md) を参照してください。
+実験条件は `configs/local/toys.json` に集約しています。
+既存の成果物がある場合は、新しい出力先を指定して実行します。
+
+```bash
+uv run python scripts/run_toys_pipeline.py --output-dir artifacts/toys_trial_01 --dry-run
+```
+
 ## Local Toys experiment
 
 `scripts/inspect_amazon_data.py` counts records in the extracted Amazon datasets.
