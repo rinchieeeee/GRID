@@ -165,3 +165,38 @@ For questions and support:
 [3] Lee, Doyup, et al. "Autoregressive image generation using residual quantization." Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. 2022.
 
 [4] Geng, Shijie, et al. "Recommendation as language processing (rlp): A unified pretrain, personalized prompt & predict paradigm (p5)." Proceedings of the 16th ACM conference on recommender systems. 2022.
+
+## Local Toys experiment
+
+`scripts/inspect_amazon_data.py` counts records in the extracted Amazon datasets.
+Toys is the smallest category: 11,924 items and 19,412 user histories in each
+of training, evaluation and testing. The source archive is the Google Drive
+link in Data Preparation; extract its `amazon_data/` directory under `data/`.
+
+```bash
+uv run python scripts/inspect_amazon_data.py
+uv run python scripts/run_toys_pipeline.py
+```
+
+The pipeline generates FLAN-T5-XL embeddings, trains a three-level Residual
+K-means with 256 codes per level for 90 epochs (approximately 30 passes per
+level), generates unique four-level Semantic IDs, and trains TIGER for exactly
+10 epochs with early stopping disabled. The finite training loader visits each
+record once per epoch. Training augmentation samples up to 32 examples per
+batch, and uses BF16 mixed precision on one GPU. Validation runs after each
+TIGER epoch; the best validation Recall@5 checkpoint is used for the final test.
+
+Outputs, commands, configuration snapshots, console logs, metrics and
+checkpoints are under `artifacts/toys_rkmeans_10epochs/`. Run
+`uv run python scripts/summarize_toys_run.py` to refresh `results.md` and
+`summary.json` with the validation history and final test results. `status.json` tracks
+each stage. A completed stage has a `.complete` marker and is skipped on
+subsequent runs. Downloaded data and experiment artifacts are ignored by Git.
+
+The local trial changes the original experiment settings: training augmentation
+is capped at 32 examples rather than 512, precision is BF16 mixed rather than
+FP32, and validation/test batch sizes are 128 rather than 8. The source history
+batch size remains 32 and gradient accumulation remains 16. Thus the optimizer
+sees up to 512 augmented examples per update, compared with up to 8,192 under
+the original cap. These settings affect training and this trial is not a strict
+reproduction of the original experiment.
