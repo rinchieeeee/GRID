@@ -19,19 +19,32 @@ GRID facilitates generative recommendation three overarching steps:
 ## 📦 Installation
 
 ### Prerequisites
-- Python 3.10+
-- CUDA-compatible GPU (recommended)
+- Python 3.12.5 managed by pyenv
+- uv
+- Linux x86_64 and an NVIDIA GPU with a CUDA 12.8 compatible driver
 
 ### Setup Environment
 
 ```bash
-# Clone the repository
 git clone https://github.com/snap-research/GRID.git
 cd GRID
 
-# Install dependencies
-pip install -r requirements.txt
+pyenv install -s 3.12.5
+pyenv local 3.12.5
+
+# Reproduce the environment from uv.lock using the pyenv interpreter
+uv sync --locked --python "$(pyenv which python)"
+
+# Check dependency consistency and run commands
+uv pip check
+uv run python -m src.train --help
 ```
+
+Dependencies are managed in `pyproject.toml` and pinned in `uv.lock`.
+The PyTorch family and FBGEMM use the official CUDA 12.8 wheel index.
+This setup matches the local CUDA Toolkit 12.8 and RTX 3090.
+Use `uv run` to execute commands, or `source .venv/bin/activate` to activate
+this environment in your shell.
 
 ## 🎯 Quick Start
 
