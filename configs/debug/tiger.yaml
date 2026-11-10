@@ -1,0 +1,38 @@
+# @package _global_
+# TIGERの少量デバッグ用。自動再試行とDDPを外し、例外をその場で確認する。
+should_skip_retry: true
+callbacks:
+  restart_job: null
+trainer:
+  accelerator: auto
+  devices: 1
+  strategy: auto
+  max_steps: 2
+  max_epochs: 1
+  limit_train_batches: 2
+  limit_val_batches: 2
+  limit_test_batches: 2
+  val_check_interval: 1.0
+  accumulate_grad_batches: 1
+  detect_anomaly: true
+  log_every_n_steps: 1
+extras:
+  print_config: false
+data_loading:
+  train_dataloader_config:
+    dataloader:
+      num_workers: 0
+      timeout: 0
+      persistent_workers: false
+      collate_fn:
+        max_batch_size: 8
+  val_dataloader_config:
+    dataloader:
+      num_workers: 0
+      timeout: 0
+      persistent_workers: false
+  test_dataloader_config:
+    dataloader:
+      num_workers: 0
+      timeout: 0
+      persistent_workers: false
