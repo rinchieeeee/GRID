@@ -200,3 +200,51 @@ batch size remains 32 and gradient accumulation remains 16. Thus the optimizer
 sees up to 512 augmented examples per update, compared with up to 8,192 under
 the original cap. These settings affect training and this trial is not a strict
 reproduction of the original experiment.
+
+### Original configuration runtime check
+
+The original `rkmeans_train_flat` and `tiger_train_flat` settings were also
+verified on the RTX 3090. R-KMeans completed its original 30 optimizer steps.
+TIGER ran with FP32, augmentation cap 512, gradient accumulation 16, and eight
+data-loading processes: 64 batches, four optimizer updates and full validation
+passed. DDP initialized successfully with one GPU and `world_size=1`. Peak
+PyTorch reserved memory was 12.91 GiB. This was a short runtime check, not a
+complete 320,000-step run; a diagnostic callback stopped it after 64 batches.
+Artifacts and configuration snapshots are in `artifacts/toys_original_config/`.
+
+### 元設定による早期終了付き学習
+
+```bash
+uv run python scripts/start_toys_training.py
+```
+
+元の `tiger_train_flat` を使い、`trainer.max_epochs=100` のみを変更して
+独立プロセスで学習を開始します。読み込みバッチ32、拡張上限512、FP32、
+勾配蓄積16、ワーカー8、単一GPUでのDDPを維持します。検証は1,600バッチ
+（100回のパラメータ更新）ごとに実行し、検証 Recall@5 が10回連続で
+改善しなければ早期終了します。
+
+元の学習ローダーは無限反復するため、データ1周でエポックが終了しません。
+通常は epoch 0 のまま早期終了または320,000更新の上限まで進み、
+`max_epochs=100` は「データ100周」の制限にはなりません。
+
+この実行は `toys_original_config` に保存した元設定の30ステップで学習した
+Residual K-means と、そのチェックポイントから生成したSIDを使用します。
+前節の動作確認が済んでおり、データとSIDが同じ相対パスに存在することが
+必要です。実行先と監視プロセスIDは
+`artifacts/toys_original_100epochs/latest_run.json`、各実行の状態は
+`status.json`、ログは `console.log` に保存されます。
+
+2026年11月10日のToys実行は約4時間43分で正常終了しました。4,600更新で
+早期終了し、検証 Recall@5 が最良だった3,600更新時点のモデルで
+テスト履歴19,412件を評価しました。
+
+| テスト指標 | 結果 |
+|---|---:|
+| Recall@5 | 0.042396 |
+| Recall@10 | 0.062333 |
+| NDCG@5 | 0.027544 |
+| NDCG@10 | 0.033976 |
+
+推薦モデルは13,128,064パラメータです。この実行は公開configに従った
+単一シードの結果であり、論文の実験条件を厳密に再現したものではありません。
