@@ -2,7 +2,7 @@
 
 import logging
 from functools import partial
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from lightning import LightningDataModule
 from lightning.pytorch.trainer.states import TrainerFn
@@ -21,10 +21,10 @@ class SequenceDataModule(LightningDataModule):
 
     def __init__(
         self,
-        train_dataloader_config: Optional[BaseDataloaderConfig] = None,
-        val_dataloader_config: Optional[BaseDataloaderConfig] = None,
-        test_dataloader_config: Optional[BaseDataloaderConfig] = None,
-        predict_dataloader_config: Optional[BaseDataloaderConfig] = None,
+        train_dataloader_config: BaseDataloaderConfig | None = None,
+        val_dataloader_config: BaseDataloaderConfig | None = None,
+        test_dataloader_config: BaseDataloaderConfig | None = None,
+        predict_dataloader_config: BaseDataloaderConfig | None = None,
     ) -> None:
         """Construct a SequenceDataModule using the provided config files.
 
@@ -54,7 +54,7 @@ class SequenceDataModule(LightningDataModule):
             TrainerFn.PREDICTING: predict_dataloader_config,
         }
 
-        self.stage_to_file_map: Dict[TrainerFn, Dict[int, List[str]]] = dict()
+        self.stage_to_file_map: dict[TrainerFn, dict[int, list[str]]] = dict()
 
     def _get_partial_collate_fn(
         self, dataloader_config: BaseDataloaderConfig
@@ -83,7 +83,7 @@ class SequenceDataModule(LightningDataModule):
             else config.dataset_config.data_iterator.get_file_suffix()
         )
 
-    def setup(self, stage: Optional[str] = None) -> None:
+    def setup(self, stage: str | None = None) -> None:
         """Assign data files to GPUs.
 
         Note that `self.trainer.world_size` is the total number of GPUs, and is
@@ -103,7 +103,7 @@ class SequenceDataModule(LightningDataModule):
         """
         if not hasattr(self, "trainer") or self.trainer is None:
             raise AttributeError(
-                f"self.trainer must be initialized before call to setup()."
+                "self.trainer must be initialized before call to setup()."
             )
 
         for stage, config in self.stage_to_config.items():
@@ -149,7 +149,7 @@ class SequenceDataModule(LightningDataModule):
         """
         if not hasattr(self, "trainer"):
             raise AttributeError(
-                f"self.trainer must be initialized before call to get_dataloader()."
+                "self.trainer must be initialized before call to get_dataloader()."
             )
 
         if not self.stage_to_file_map[stage]:
@@ -242,15 +242,14 @@ class SequenceDataModule(LightningDataModule):
         """
         return self.get_dataloader(stage=TrainerFn.PREDICTING)
 
-    def teardown(self, stage: Optional[str] = None) -> None:
+    def teardown(self, stage: str | None = None) -> None:
         """Lightning hook for cleaning up after `trainer.fit()`,
         `trainer.validate()`, `trainer.test()`, and `trainer.predict()`.
 
         :param stage: The stage being torn down. Defaults to ``None``.
         """
-        pass
 
-    def state_dict(self) -> Dict[Any, Any]:
+    def state_dict(self) -> dict[Any, Any]:
         """Called when saving a checkpoint. Implement to generate and save the
         datamodule state.
 
@@ -259,13 +258,12 @@ class SequenceDataModule(LightningDataModule):
         """
         return {}
 
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
+    def load_state_dict(self, state_dict: dict[str, Any]) -> None:
         """Called when loading a checkpoint. Implement to reload datamodule
         state given datamodule `state_dict()`.
 
         :param state_dict: The datamodule state returned by `self.state_dict()`.
         """
-        pass
 
 
 class ItemDataModule(SequenceDataModule):
@@ -275,10 +273,10 @@ class ItemDataModule(SequenceDataModule):
 
     def __init__(
         self,
-        train_dataloader_config: Optional[BaseDataloaderConfig] = None,
-        val_dataloader_config: Optional[BaseDataloaderConfig] = None,
-        test_dataloader_config: Optional[BaseDataloaderConfig] = None,
-        predict_dataloader_config: Optional[BaseDataloaderConfig] = None,
+        train_dataloader_config: BaseDataloaderConfig | None = None,
+        val_dataloader_config: BaseDataloaderConfig | None = None,
+        test_dataloader_config: BaseDataloaderConfig | None = None,
+        predict_dataloader_config: BaseDataloaderConfig | None = None,
     ) -> None:
         """Construct a SequenceDataModule using the provided config files.
 
@@ -320,7 +318,7 @@ class ItemDataModule(SequenceDataModule):
         """
         if not hasattr(self, "trainer"):
             raise AttributeError(
-                f"self.trainer must be initialized before call to get_dataloader()."
+                "self.trainer must be initialized before call to get_dataloader()."
             )
 
         if not self.stage_to_file_map[stage]:

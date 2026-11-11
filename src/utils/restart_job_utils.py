@@ -1,12 +1,12 @@
 import json
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Set, TypeVar
+from typing import Any, TypeVar
 
 import psutil
 from lightning import Trainer
-from omegaconf import DictConfig
 
 from src.utils.file_utils import (
     file_exists_local_or_remote,
@@ -18,17 +18,13 @@ from src.utils.pylogger import RankedLogger
 command_line_logger = RankedLogger(__name__, rank_zero_only=True)
 F = TypeVar("F", bound=Callable[..., Any])
 
-import os
-import sys
-from datetime import datetime
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 import torch
 import torch.distributed as dist
-from lightning import Trainer
 from lightning.pytorch.strategies.launchers import _SubprocessScriptLauncher
 from lightning.pytorch.trainer.connectors.signal_connector import _get_sigkill_signal
-from omegaconf import DictConfig
 
 from src.utils.pylogger import RankedLogger
 
@@ -53,15 +49,15 @@ class JobCheckpointMetadata:
     """
 
     start_time: str = field(default_factory=lambda: datetime.now().isoformat())
-    restarts: List[Dict[str, Any]] = field(default_factory=list)
+    restarts: list[dict[str, Any]] = field(default_factory=list)
     current_run: int = 0
-    used_ports: List[str] = field(default_factory=list)
+    used_ports: list[str] = field(default_factory=list)
     world_size: int = 0
     node_rank: int = 0
     master_addr: str = ""
-    original_args: List[str] = field(default_factory=lambda: sys.argv)
+    original_args: list[str] = field(default_factory=lambda: sys.argv)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "start_time": self.start_time,
             "restarts": self.restarts,
@@ -92,7 +88,7 @@ class RestartMetadata:
     exception: str
     run_number: int
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "time": self.time,
             "exception": self.exception,
@@ -205,7 +201,7 @@ def _is_process_running(proc: psutil.Process) -> bool:
 
 
 def clean_up_resources(
-    trainer: Optional[Trainer] = None, exception: Optional[Exception] = None
+    trainer: Trainer | None = None, exception: Exception | None = None
 ) -> None:
     """Clean up distributed processes and CUDA resources."""
     if dist.is_initialized():

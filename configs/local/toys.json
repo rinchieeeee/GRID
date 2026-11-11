@@ -1,0 +1,17 @@
+{
+  "dataset": "toys",
+  "data_dir": "data/amazon_data/toys",
+  "output_dir": "artifacts/toys_rkmeans_10epochs",
+  "embedding_model": "google/flan-t5-xl",
+  "embedding_dim": 2048,
+  "num_hierarchies": 3,
+  "codebook_width": 256,
+  "rkmeans_epochs": 90,
+  "rkmeans_batch_size": 1024,
+  "recommendation_epochs": 10,
+  "augmentation_batch_size": 32,
+  "evaluation_batch_size": 128,
+  "precision": "bf16-mixed",
+  "seed": null,
+  "overrides": {}
+}

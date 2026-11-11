@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Optional, Tuple, Union
+from typing import Any
 
 import torch
 import transformers
@@ -82,7 +82,7 @@ class SemanticIDGenerativeRecommender(TransformerBaseModule):
         attention_mask: torch.Tensor,
         sep_token: torch.Tensor,
         num_hierarchies: int,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Inject a separator token into the ID embeddings and attention mask.
 
@@ -149,12 +149,12 @@ class SemanticIDGenerativeRecommender(TransformerBaseModule):
         return table
 
     def _is_kv_cache_valid(
-        self, kv_cache: Union[Tuple, DynamicCache, EncoderDecoderCache]
+        self, kv_cache: tuple | DynamicCache | EncoderDecoderCache
     ) -> bool:
 
         if isinstance(kv_cache, (EncoderDecoderCache, DynamicCache)):
             return len(kv_cache) > 0
-        elif isinstance(kv_cache, Tuple):
+        elif isinstance(kv_cache, tuple):
             return True
         else:
             return False
@@ -164,7 +164,7 @@ class SemanticIDGenerativeRecommender(TransformerBaseModule):
         input_sids: torch.Tensor,
         codebook_size: int,
         num_hierarchies: int,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
     ):
         """Adds repeating offsets to each element in each row of input_sids.
         we use a single embedding table for multiple code books.
@@ -253,9 +253,9 @@ class SemanticIDGenerativeRecommender(TransformerBaseModule):
     def _beam_search_one_step(
         self,
         candidate_logits: torch.Tensor,
-        generated_ids: Union[torch.Tensor, None],
-        marginal_log_prob: Union[torch.Tensor, None],
-        past_key_values: Union[EncoderDecoderCache, None],
+        generated_ids: torch.Tensor | None,
+        marginal_log_prob: torch.Tensor | None,
+        past_key_values: EncoderDecoderCache | None,
         hierarchy: int,
         batch_size: int,
     ):
@@ -373,7 +373,7 @@ class SemanticIDGenerativeRecommender(TransformerBaseModule):
 
     def eval_step(
         self,
-        batch: Tuple[SequentialModelInputData, SequentialModuleLabelData],
+        batch: tuple[SequentialModelInputData, SequentialModuleLabelData],
         loss_to_aggregate: BaseAggregator,
     ):
         """Perform a single evaluation step on a batch of data from the validation or test set.
@@ -471,8 +471,8 @@ class SemanticIDEncoderDecoder(SemanticIDGenerativeRecommender):
         embedding_dim: int = None,
         num_hierarchies: int = None,
         num_embeddings_per_hierarchy: int = None,
-        num_user_bins: Optional[int] = None,
-        mlp_layers: Optional[int] = None,
+        num_user_bins: int | None = None,
+        mlp_layers: int | None = None,
         should_check_prefix: bool = False,
         should_add_sep_token: bool = True,
         prediction_key_name: str = "user_id",
@@ -660,14 +660,12 @@ class SemanticIDEncoderDecoder(SemanticIDGenerativeRecommender):
 
     def decoder_forward_pass(
         self,
-        attention_mask: Optional[
-            torch.Tensor
-        ] = None,  # TODO (clark): in the future we should support variable length semantic id
-        future_ids: Optional[torch.Tensor] = None,
-        encoder_output: Optional[torch.Tensor] = None,
-        attention_mask_for_encoder: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,  # TODO (clark): in the future we should support variable length semantic id
+        future_ids: torch.Tensor | None = None,
+        encoder_output: torch.Tensor | None = None,
+        attention_mask_for_encoder: torch.Tensor | None = None,
         use_cache: bool = False,
-        past_key_values: Optional[DynamicCache] = None,
+        past_key_values: DynamicCache | None = None,
     ) -> torch.Tensor:
         """
         Forward pass for the decoder module.
@@ -830,9 +828,9 @@ class SemanticIDEncoderDecoder(SemanticIDGenerativeRecommender):
         self,
         attention_mask_encoder: torch.Tensor,
         input_ids: torch.Tensor,
-        user_id: Optional[torch.Tensor] = None,
-        future_ids: Optional[torch.Tensor] = None,
-        attention_mask_decoder: Optional[torch.Tensor] = None,
+        user_id: torch.Tensor | None = None,
+        future_ids: torch.Tensor | None = None,
+        attention_mask_decoder: torch.Tensor | None = None,
         **kwargs: Any,
     ) -> torch.Tensor:
         """
@@ -860,7 +858,7 @@ class SemanticIDEncoderDecoder(SemanticIDGenerativeRecommender):
         )
         return decoder_output
 
-    def get_embedding_table(self, table_name: str, hierarchy: Optional[int] = None):
+    def get_embedding_table(self, table_name: str, hierarchy: int | None = None):
         """
         Get the embedding table for the given table name and hierarchy.
         Args:
@@ -869,9 +867,7 @@ class SemanticIDEncoderDecoder(SemanticIDGenerativeRecommender):
         """
         # here we assume the encoder and decoder share the same embedding table
         # we can have flexible embedding table in the future
-        if table_name == "encoder":
-            embedding_table = self.item_sid_embedding_table_encoder
-        elif table_name == "decoder":
+        if table_name == "encoder" or table_name == "decoder":
             embedding_table = self.item_sid_embedding_table_encoder
 
         if hierarchy is not None:
@@ -900,8 +896,8 @@ class SemanticIDEncoderDecoder(SemanticIDGenerativeRecommender):
     def model_step(
         self,
         model_input: SequentialModelInputData,
-        label_data: Optional[SequentialModuleLabelData] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        label_data: SequentialModuleLabelData | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Perform a forward pass of the model and calculate the loss if label_data is provided.
 
@@ -962,8 +958,8 @@ class SemanticIDDecoderModule(torch.nn.Module):
     def __init__(
         self,
         decoder: transformers.PreTrainedModel,
-        decoder_mlp: Optional[torch.nn.Module] = None,
-        bos_token: Optional[torch.nn.Parameter] = None,
+        decoder_mlp: torch.nn.Module | None = None,
+        bos_token: torch.nn.Parameter | None = None,
     ) -> None:
         """
         Initialize the SemanticIDDecoderModule.

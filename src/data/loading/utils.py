@@ -3,7 +3,6 @@
 import heapq
 import random
 from collections import defaultdict
-from typing import Dict, List
 
 import torch
 
@@ -11,12 +10,12 @@ from src.utils.file_utils import get_file_size
 
 
 def assign_files_to_workers(
-    list_of_files: List[str],
+    list_of_files: list[str],
     total_workers: int,
     assign_by_size: bool,
     should_shuffle_rows: bool,
     assign_all_files_per_worker: bool,
-) -> tuple[Dict[int, List[str]], bool]:
+) -> tuple[dict[int, list[str]], bool]:
     """Assign each file path in `list_of_files` to either one or all workers.
 
     - If `total_workers == 0`, then the function returns a single-key dict
@@ -117,8 +116,8 @@ def pad_or_trim_sequence(
 
 
 def combine_list_of_tensor_dicts(
-    list_of_dicts: List[Dict[str, torch.Tensor]]
-) -> Dict[str, List[torch.Tensor]]:
+    list_of_dicts: list[dict[str, torch.Tensor]]
+) -> dict[str, list[torch.Tensor]]:
     batch = defaultdict(list)
     for sequence in list_of_dicts:
         for field_name, field_sequence in sequence.items():

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import torch
 from lightning.pytorch import LightningModule
@@ -6,8 +6,8 @@ from lightning.pytorch.utilities import rank_zero_only
 from torch import nn
 from torchmetrics import MeanMetric
 
-from src.components.distance_functions import DistanceFunction
 from src.components.clustering_initializers import ClusteringInitializer
+from src.components.distance_functions import DistanceFunction
 from src.components.loss_functions import WeightedSquaredError
 
 
@@ -20,7 +20,7 @@ class BaseClusteringModule(LightningModule):
         initializer: ClusteringInitializer,
         loss_function: nn.Module,
         optimizer: torch.optim.Optimizer,
-        scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+        scheduler: torch.optim.lr_scheduler._LRScheduler | None = None,
         init_buffer_size: int = 1000,
         update_manually: bool = False,
     ):
@@ -38,7 +38,7 @@ class BaseClusteringModule(LightningModule):
             init_buffer_size: Number of points to buffer for initialization.
             update_manually: Whether to manually update the centroids without gradients.
         """
-        super(BaseClusteringModule, self).__init__()
+        super().__init__()
 
         self.n_clusters = n_clusters
         self.n_features = n_features
@@ -97,7 +97,7 @@ class BaseClusteringModule(LightningModule):
     def initialization_step(
         self,
         batch: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor]]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None]:
         """
         Perform a model step that occurs before centroids are initialized.
 
@@ -150,7 +150,7 @@ class BaseClusteringModule(LightningModule):
             assignments = torch.argmin(distances, dim=1).to(self.device)
             return assignments, self.init_centroids[assignments], loss
 
-    def forward(self, batch: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, bool]:
+    def forward(self, batch: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, bool]:
         """
         Update clusters based on the points in `batch`.
 
@@ -169,7 +169,7 @@ class BaseClusteringModule(LightningModule):
 
     def model_step(
         self, batch: torch.Tensor, **kwargs
-    ) -> Tuple[torch.Tensor, torch.Tensor, bool]:
+    ) -> tuple[torch.Tensor, torch.Tensor, bool]:
         """
         Update clusters based on the points in `batch`.
 
@@ -188,7 +188,7 @@ class BaseClusteringModule(LightningModule):
 
     def training_step(
         self, batch: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, bool]:
+    ) -> tuple[torch.Tensor, torch.Tensor, bool]:
         """
         Update clusters based on the points in `batch`.
 
@@ -219,7 +219,7 @@ class BaseClusteringModule(LightningModule):
 
     def predict_step(
         self, batch: torch.Tensor, return_embeddings: bool = True
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Predict cluster assignments for input points.
 
@@ -269,7 +269,7 @@ class BaseClusteringModule(LightningModule):
         self.init_buffer = torch.tensor([], device=self.device)
         self.centroids = self.centroids.to(self.device)
 
-    def configure_optimizers(self) -> Dict[str, Any]:
+    def configure_optimizers(self) -> dict[str, Any]:
         """Choose what optimizers and learning-rate schedulers to use in your optimization.
         Normally you'd need one. But in the case of GANs or similar you might have multiple.
 

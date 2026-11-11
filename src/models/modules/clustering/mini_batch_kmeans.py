@@ -1,14 +1,13 @@
 import functools
-from typing import Optional, Tuple
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-from src.components.distance_functions import DistanceFunction
 from src.components.clustering_initializers import (
     ClusteringInitializer,
     KMeansPlusPlusInitInitializer,
 )
+from src.components.distance_functions import DistanceFunction
 from src.components.loss_functions import WeightedSquaredError
 from src.models.modules.clustering.base_clustering_module import BaseClusteringModule
 
@@ -56,7 +55,7 @@ class MiniBatchKMeans(BaseClusteringModule):
 
     def forward(
         self, batch: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Perform a forward pass of the K-Means model on the input batch.
 
@@ -88,7 +87,7 @@ class MiniBatchKMeans(BaseClusteringModule):
 
     def model_step(
         self, batch: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, bool]:
+    ) -> tuple[torch.Tensor, torch.Tensor, bool]:
         """
         Perform a forward pass of the K-Means model on the batch and compute the loss.
 

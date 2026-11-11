@@ -1,16 +1,16 @@
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
 from src.data.loading.components.interfaces import (
+    ItemData,
     LabelFunctionOutput,
     SequentialModelInputData,
     SequentialModuleLabelData,
 )
 from src.data.loading.utils import combine_list_of_tensor_dicts, pad_or_trim_sequence
-from src.utils.tensor_utils import extract_locations
-from src.data.loading.components.interfaces import ItemData
+
 
 def identity_collate_fn(batch: Any) -> Any:
     """The default collate function that does nothing."""
@@ -20,18 +20,16 @@ def identity_collate_fn(batch: Any) -> Any:
 def collate_with_sid_causal_duplicate(
     # batch can be a list or a dict
     # this function is used to create the generate contiguous sequences as data augmentation to improve the performance
-    batch: Union[List[Dict[str, torch.Tensor]], Dict[str, torch.Tensor]],
+    batch: list[dict[str, torch.Tensor]] | dict[str, torch.Tensor],
     sequence_field_name: str,
     sid_hierarchy: int,
-    labels: Dict[str, callable],  # type: ignore
+    labels: dict[str, callable],  # type: ignore
     sequence_length: int = 200,
     masking_token: int = 1,
     padding_token: int = 0,
-    oov_token: Optional[
-        int
-    ] = None,  # If oov_token is passed, we remove it from the sequence
+    oov_token: int | None = None,  # If oov_token is passed, we remove it from the sequence
     max_batch_size: int = 128,
-) -> Tuple[SequentialModelInputData, SequentialModuleLabelData]:
+) -> tuple[SequentialModelInputData, SequentialModuleLabelData]:
     """
         this collate fn is used to create the generate contiguous sequences as data augmentation to improve the performance.
         It does three things
@@ -118,13 +116,11 @@ def collate_with_sid_causal_duplicate(
 
 def collate_fn_inference_for_sequence(
     # batch can be a list or a dict
-    batch: Union[List[Dict[str, torch.Tensor]], Dict[str, torch.Tensor]],
+    batch: list[dict[str, torch.Tensor]] | dict[str, torch.Tensor],
     id_field_name: str,
     sequence_length: int = 200,
     padding_token: int = 0,
-    oov_token: Optional[
-        int
-    ] = None,  # If oov_token is passed, we remove it from the sequence
+    oov_token: int | None = None,  # If oov_token is passed, we remove it from the sequence
     **kwargs,
 ) -> SequentialModelInputData:
     """The collate function passed to inference dataloader for inference with sequential data.
@@ -187,18 +183,14 @@ def collate_fn_inference_for_sequence(
 
 def collate_fn_train(
     # batch can be a list or a dict
-    batch: Union[List[Dict[str, torch.Tensor]], Dict[str, torch.Tensor]],
-    labels: Dict[str, callable],  # type: ignore
+    batch: list[dict[str, torch.Tensor]] | dict[str, torch.Tensor],
+    labels: dict[str, callable],  # type: ignore
     sequence_length: int = 200,
     masking_token: int = 1,
     padding_token: int = 0,
-    oov_token: Optional[
-        int
-    ] = None,  # If oov_token is passed, we remove it from the sequence
-    data_augmentation_functions: Optional[
-        List[Dict[str, callable]]
-    ] = None,  # type: ignore
-) -> Tuple[SequentialModelInputData, SequentialModuleLabelData]:
+    oov_token: int | None = None,  # If oov_token is passed, we remove it from the sequence
+    data_augmentation_functions: list[dict[str, callable]] | None = None,  # type: ignore
+) -> tuple[SequentialModelInputData, SequentialModuleLabelData]:
     """The collate function passed to dataloader. It can do training masking and padding for the input sequence.
 
     Parameters
@@ -281,9 +273,9 @@ def collate_fn_train(
 
 def collate_fn_items(
     # batch can be a list or a dict
-    batch: Union[List[Dict[str, torch.Tensor]], Dict[str, torch.Tensor]],
+    batch: list[dict[str, torch.Tensor]] | dict[str, torch.Tensor],
     item_id_field: str,
-    feature_to_input_name: Dict[str, str],  # type: ignore
+    feature_to_input_name: dict[str, str],  # type: ignore
 ) -> ItemData:
     """The collate function passed to the item dataloader.
 

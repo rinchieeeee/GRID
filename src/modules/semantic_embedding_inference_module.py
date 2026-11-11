@@ -1,4 +1,3 @@
-from typing import Dict, Optional, Union
 
 import torch
 import transformers
@@ -12,8 +11,8 @@ from src.models.components.interfaces import OneKeyPerPredictionOutput
 class SemanticEmbeddingInferenceModule(LightningModule):
     def __init__(
         self,
-        semantic_embedding_model: Union[nn.Module, transformers.PreTrainedModel],
-        semantic_embedding_model_input_map: Optional[Dict[str, str]] = None,
+        semantic_embedding_model: nn.Module | transformers.PreTrainedModel,
+        semantic_embedding_model_input_map: dict[str, str] | None = None,
         **kwargs,
     ) -> None:
         """

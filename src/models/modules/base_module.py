@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import torch
 import transformers
@@ -15,9 +15,9 @@ command_line_logger = RankedLogger(__name__, rank_zero_only=True)
 class BaseModule(LightningModule):
     def __init__(
         self,
-        model: Union[torch.nn.Module, transformers.PreTrainedModel],
+        model: torch.nn.Module | transformers.PreTrainedModel,
         optimizer: torch.optim.Optimizer,
-        scheduler: Optional[torch.optim.lr_scheduler._LRScheduler],
+        scheduler: torch.optim.lr_scheduler._LRScheduler | None,
         loss_function: torch.nn.Module,
         evaluator: Evaluator,
         training_loop_function: callable = None,
@@ -56,7 +56,7 @@ class BaseModule(LightningModule):
             self.test_loss = MeanMetric()
 
     @property
-    def prediction_key_name(self) -> Optional[str]:
+    def prediction_key_name(self) -> str | None:
         return self._prediction_key_name
 
     @prediction_key_name.setter
@@ -65,7 +65,7 @@ class BaseModule(LightningModule):
         self._prediction_key_name = value
 
     @property
-    def prediction_name(self) -> Optional[str]:
+    def prediction_name(self) -> str | None:
         return self._prediction_name
 
     @prediction_name.setter
@@ -75,7 +75,7 @@ class BaseModule(LightningModule):
 
     def forward(
         self,
-        **kwargs: Dict[str, torch.Tensor],
+        **kwargs: dict[str, torch.Tensor],
     ) -> torch.Tensor:
         raise NotImplementedError(
             "Inherit from this class and implement the forward method."
@@ -84,7 +84,7 @@ class BaseModule(LightningModule):
     def model_step(
         self,
         model_input: Any,
-        label_data: Optional[Any] = None,
+        label_data: Any | None = None,
     ):
         raise NotImplementedError(
             "Inherit from this class and implement the model_step method."
@@ -134,7 +134,7 @@ class BaseModule(LightningModule):
         logger=True,
         prog_bar=False,
         call_compute=False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
 
         metrics_dict = {
             f"{prefix}/{metric_name}": metric_object.compute()
@@ -163,9 +163,8 @@ class BaseModule(LightningModule):
         """
         # if self.hparams.compile and stage == "fit":
         #     self.net = torch.compile(self.net)
-        pass
 
-    def configure_optimizers(self) -> Dict[str, Any]:
+    def configure_optimizers(self) -> dict[str, Any]:
         """Choose what optimizers and learning-rate schedulers to use in your optimization.
         Normally you'd need one. But in the case of GANs or similar you might have multiple.
 

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import torch
 
@@ -22,7 +21,7 @@ class MeanAggregation(AggregationStrategy):
     Aggregates the embeddings by computing their mean. If last_k is specified, only the last K embeddings are considered.
     """
 
-    def __init__(self, last_k: Optional[int] = None):
+    def __init__(self, last_k: int | None = None):
         """
         Initializes the MeanAggregation class with the specified number of last embeddings to consider.
 

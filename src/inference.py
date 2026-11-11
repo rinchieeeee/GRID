@@ -1,51 +1,49 @@
-from typing import Any, Dict
+"""Hydra設定またはPythonから推論を実行する。"""
+
+# rootutilsによるパス設定後にローカルモジュールを読み込む。
+# ruff: noqa: E402
+
+from typing import Any
 
 import hydra
 import rootutils
 from omegaconf import DictConfig
 
+# 実行ディレクトリによらずローカルモジュールを参照できるようにする。
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 from src.utils import RankedLogger, extras
-from src.utils.custom_hydra_resolvers import *
+from src.utils import custom_hydra_resolvers as _resolvers  # noqa: F401
 from src.utils.launcher_utils import pipeline_launcher
 
 command_line_logger = RankedLogger(__name__, rank_zero_only=True)
 
 
-def inference(cfg: DictConfig) -> Dict[str, Any]:
-    """Runs inference using a pre-trained model.
-
-    :param cfg: A DictConfig configuration composed by Hydra.
-    :return: A dict with all instantiated objects.
-    """
-
-    with pipeline_launcher(cfg) as pipeline_modules:
-        command_line_logger.info("Starting inference!")
-        ckpt_path = pipeline_modules.cfg.get("ckpt_path", None)
-        if not ckpt_path:
-            command_line_logger.warning(
-                "No ckpt_path was provided. If using a model you trained, this is mandatory. Only leave ckpt_path=None if using a pre-trained model."
-            )
-
-        pipeline_modules.trainer.predict(
-            model=pipeline_modules.model,
-            datamodule=pipeline_modules.datamodule,
+def inference(cfg: DictConfig) -> dict[str, Any]:
+    """推論結果は設定済みコールバックで保存し、調査用オブジェクトを返す。"""
+    with pipeline_launcher(cfg) as modules:
+        ckpt_path = modules.cfg.get("ckpt_path")
+        command_line_logger.info(f"推論を開始します。チェックポイント: {ckpt_path}")
+        modules.trainer.predict(
+            model=modules.model,
+            datamodule=modules.datamodule,
             ckpt_path=ckpt_path,
             return_predictions=False,
         )
+        return {
+            "cfg": modules.cfg,
+            "model": modules.model,
+            "datamodule": modules.datamodule,
+            "trainer": modules.trainer,
+            "callbacks": modules.callbacks,
+            "loggers": modules.loggers,
+        }
 
 
 @hydra.main(version_base="1.3", config_path="../configs", config_name="inference.yaml")
 def main(cfg: DictConfig) -> None:
-    """Main entry point for inference.
-
-    :param cfg: DictConfig configuration composed by Hydra.
-    """
-    # apply extra utilities
+    """設定を表示して推論を実行する。"""
     extras(cfg)
-
-    # run inference
     inference(cfg)
 
 

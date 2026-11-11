@@ -1,6 +1,6 @@
 import copy
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import torch
 from lightning import LightningModule
@@ -17,20 +17,20 @@ from src.models.modules.clustering.base_clustering_module import BaseClusteringM
 class ResidualQuantization(LightningModule):
     def __init__(
         self,
-        n_layers: Optional[int] = None,
+        n_layers: int | None = None,
         normalization_layer: nn.Module = nn.Identity(),
         encoder: nn.Module = nn.Identity(),
         decoder: nn.Module = nn.Identity(),
-        quantization_layer: Optional[BaseClusteringModule] = None,
-        quantization_layer_list: Optional[nn.ModuleList] = None,
+        quantization_layer: BaseClusteringModule | None = None,
+        quantization_layer_list: nn.ModuleList | None = None,
         init_buffer_size: int = 1000,
         training_loop_function: callable = None,
         quantization_loss_weight: float = 1.0,
-        reconstruction_loss_function: Optional[nn.Module] = None,
+        reconstruction_loss_function: nn.Module | None = None,
         reconstruction_loss_weight: float = 0.0,
         normalize_residuals: bool = True,
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None,
+        optimizer: torch.optim.Optimizer | None = None,
+        scheduler: torch.optim.lr_scheduler.LRScheduler | None = None,
         train_layer_wise: bool = False,
         track_residuals: bool = False,
         verbose: bool = False,
@@ -148,9 +148,9 @@ class ResidualQuantization(LightningModule):
 
     def _instantiate_quantization_layer_list(
         self,
-        quantization_layer: Optional[BaseClusteringModule] = None,
-        quantization_layer_list: Optional[nn.ModuleList] = None,
-        n_layers: Optional[int] = None,
+        quantization_layer: BaseClusteringModule | None = None,
+        quantization_layer_list: nn.ModuleList | None = None,
+        n_layers: int | None = None,
     ) -> None:
         """
         Instantiate the quantization layers. If quantization_layer_list is provided,
@@ -184,7 +184,7 @@ class ResidualQuantization(LightningModule):
 
     def forward(
         self, embeddings: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Forward pass through the quantization layers.
 
@@ -235,9 +235,7 @@ class ResidualQuantization(LightningModule):
                     # layers as long as the previous layer produced valid quantized
                     # embeddings, meaning it has been initialized or is currently in
                     # its initialization step.
-                    elif idx == 0:
-                        train_layer = True
-                    elif (
+                    elif idx == 0 or (
                         self.quantization_layer_list[idx - 1].is_initialized
                         or self.quantization_layer_list[idx - 1].is_initial_step
                     ):
@@ -268,7 +266,7 @@ class ResidualQuantization(LightningModule):
 
     def model_step(
         self, model_input: ItemData
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Perform a forward pass and compute the loss for a single batch.
 
@@ -316,7 +314,7 @@ class ResidualQuantization(LightningModule):
             reconstruction_loss,
         )
 
-    def training_step(self, batch: Tuple[ItemData]) -> torch.Tensor:
+    def training_step(self, batch: tuple[ItemData]) -> torch.Tensor:
         """
         Perform a single training step on a batch of data.
 
@@ -503,7 +501,7 @@ class ResidualQuantization(LightningModule):
         cluster_ids: torch.Tensor,
         all_residuals: torch.Tensor,
         input_embeddings: torch.Tensor,
-    ) -> Tuple[MeanMetric, MeanMetric, MeanMetric, MeanMetric, MeanMetric]:
+    ) -> tuple[MeanMetric, MeanMetric, MeanMetric, MeanMetric, MeanMetric]:
         """
         Compute output statistics for the model.
 
@@ -737,7 +735,7 @@ class ResidualQuantization(LightningModule):
         )
         return model_output
 
-    def configure_optimizers(self) -> Dict[str, Any]:
+    def configure_optimizers(self) -> dict[str, Any]:
         """
         Configure the optimizer and learning rate scheduler.
 

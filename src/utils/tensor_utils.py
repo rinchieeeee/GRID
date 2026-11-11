@@ -1,11 +1,10 @@
-from typing import Optional, Tuple, Union
 
 import torch
 
 from src.utils.file_utils import open_local_or_remote
 
 
-def locations_to_index_tuple(locations: torch.Tensor, num_dims: int = 2) -> Tuple:
+def locations_to_index_tuple(locations: torch.Tensor, num_dims: int = 2) -> tuple:
     """
     Convert a tensor of locations to a tuple of index tensors for advanced indexing.
 
@@ -123,8 +122,8 @@ def merge_list_of_keyed_tensors_to_single_tensor(
 
 
 def deduplicate_rows_in_tensor(
-    file_path: Optional[str] = None, return_tensor: bool = False
-) -> Union[None, torch.Tensor]:
+    file_path: str | None = None, return_tensor: bool = False
+) -> None | torch.Tensor:
     """
     Identifies and de-duplicate repeated rows in a PyTorch tensor.
     Rows that are not duplicated will have a new column with value 0,
@@ -177,11 +176,11 @@ def deduplicate_rows_in_tensor(
 
 
 def transpose_tensor_from_file(
-    file_path: Optional[str] = None,
+    file_path: str | None = None,
     return_tensor: bool = False,
     dim1: int = -2,
     dim2: int = -1,
-) -> Union[None, torch.Tensor]:
+) -> None | torch.Tensor:
     """
     Transposes a PyTorch tensor from a file accoridng to designated dimensions.
 

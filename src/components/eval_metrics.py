@@ -1,7 +1,6 @@
-from typing import Any, Dict, List
+from typing import Any
 
 import torch
-import torch.nn.functional as F
 import torchmetrics
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.distributed import gather_all_tensors
@@ -138,7 +137,7 @@ class Recall(CustomRetrievalMetric):
 ## Evaluators
 
 class Evaluator:
-    def __init__(self, metrics: Dict[str, Metric], *args, **kwargs):
+    def __init__(self, metrics: dict[str, Metric], *args, **kwargs):
         self.metrics = metrics
 
     def __call__(self, *args, **kwargs):
@@ -161,8 +160,8 @@ class RetrievalEvaluator(Evaluator):
 
     def __init__(
         self,
-        metrics: Dict[str, CustomRetrievalMetric],
-        top_k_list: List[int],
+        metrics: dict[str, CustomRetrievalMetric],
+        top_k_list: list[int],
         should_sample_negatives_from_vocab: bool = True,
         num_negatives: int = 500,
         placeholder_token_buffer: int = 100,
@@ -267,8 +266,8 @@ class SIDRetrievalEvaluator(Evaluator):
 
     def __init__(
         self,
-        metrics: Dict[str, CustomRetrievalMetric],
-        top_k_list: List[int],
+        metrics: dict[str, CustomRetrievalMetric],
+        top_k_list: list[int],
     ):
         self.metrics = {
             f"{metric_name}@{top_k}": metric_object(

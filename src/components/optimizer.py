@@ -12,7 +12,7 @@ class PassThroughOptimizer(Optimizer):
 
     def __init__(self, params, lr=0.01):
         defaults = dict(lr=lr)
-        super(PassThroughOptimizer, self).__init__(params, defaults)
+        super().__init__(params, defaults)
 
     def step(self, closure=None):
         return None

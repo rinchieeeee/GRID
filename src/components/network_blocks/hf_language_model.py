@@ -1,7 +1,6 @@
-from typing import Tuple, Union
 
 import torch
-import torch.nn as nn
+from torch import nn
 from transformers import PreTrainedModel
 from transformers.modeling_outputs import BaseModelOutput
 
@@ -30,7 +29,7 @@ class HFLanguageModel(nn.Module):
             postprocessor: Postprocessor to use to process the aggregated embeddings
             return_last_hidden_states: Whether to return the last hidden states
         """
-        super(HFLanguageModel, self).__init__()
+        super().__init__()
         self.huggingface_model = huggingface_model
         self.aggregator = aggregator
         self.postprocessor = postprocessor
@@ -38,7 +37,7 @@ class HFLanguageModel(nn.Module):
 
     def forward(
         self, input_ids: torch.Tensor, attention_mask: torch.Tensor
-    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """Forward pass of the HuggingFace language model.
 
         Args:

@@ -1,43 +1,43 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import numpy as np
 import tensorflow as tf
 import torch
-from src.utils.file_utils import load_json
+
 from src.data.loading.components.interfaces import (
     BaseDatasetConfig,
     SemanticIDDatasetConfig,
+    TokenizerConfig,
 )
-
-from src.data.loading.components.interfaces import TokenizerConfig
+from src.utils.file_utils import load_json
 from src.utils.utils import load_tokenize
 
 # support functions
 
 def convert_bytes_to_string(
-    batch_or_row: Dict[str, np.ndarray],
+    batch_or_row: dict[str, np.ndarray],
     dataset_config: BaseDatasetConfig,
-    features_to_apply: Optional[List[str]] = [],
+    features_to_apply: list[str] | None = [],
     **kwargs,
-) -> Dict[str, np.ndarray]:
+) -> dict[str, np.ndarray]:
     # For each feature to apply, cast its np.ndarray of bytes to string.
     for k in batch_or_row:
         if is_feature_in_features_to_apply(features_to_apply, k):
             batch_or_row[k] = batch_or_row[k].astype(str)
     return batch_or_row
 
-def is_feature_in_features_to_apply(features_to_apply: List[str], k: str) -> bool:
+def is_feature_in_features_to_apply(features_to_apply: list[str], k: str) -> bool:
     if len(features_to_apply) > 0 and k not in features_to_apply:
         return False
     return True
 
 
 def filter_features_to_consider(
-    batch_or_row: Dict[str, tf.Tensor],
+    batch_or_row: dict[str, tf.Tensor],
     dataset_config: BaseDatasetConfig,
-    features_to_apply: Optional[List[str]] = [],
+    features_to_apply: list[str] | None = [],
     **kwargs,
-) -> Dict[str, tf.Tensor]:
+) -> dict[str, tf.Tensor]:
     batch_or_row = map_feature_names(batch_or_row, dataset_config)
     features_to_consider = set(dataset_config.features_to_consider)
     if hasattr(dataset_config, "keep_user_id") and dataset_config.keep_user_id:
@@ -54,11 +54,11 @@ def filter_features_to_consider(
 
 
 def convert_to_dense_numpy_array(
-    batch_or_row: Dict[str, tf.Tensor],
+    batch_or_row: dict[str, tf.Tensor],
     dataset_config: BaseDatasetConfig,
-    features_to_apply: Optional[List[str]] = [],
+    features_to_apply: list[str] | None = [],
     **kwargs,
-) -> Dict[str, np.ndarray]:
+) -> dict[str, np.ndarray]:
     # Transform a tfrecord example to a dictionary of numpy arrays, converting sparse tensors to dense numpy arrays.
 
     for k in batch_or_row:
@@ -68,11 +68,11 @@ def convert_to_dense_numpy_array(
 
 
 def map_feature_names(
-    batch_or_row: Dict[str, np.ndarray],
+    batch_or_row: dict[str, np.ndarray],
     dataset_config: BaseDatasetConfig,
-    features_to_apply: Optional[List[str]] = [],
+    features_to_apply: list[str] | None = [],
     **kwargs,
-) -> Dict[str, np.ndarray]:
+) -> dict[str, np.ndarray]:
     # Given a batch or row, map the feature names to the desired feature names.
     if dataset_config.feature_map:
         batch_or_row = {
@@ -84,11 +84,11 @@ def map_feature_names(
 
 
 def convert_fields_to_tensors(
-    batch_or_row: Dict[str, np.ndarray],
+    batch_or_row: dict[str, np.ndarray],
     dataset_config: BaseDatasetConfig,
-    features_to_apply: Optional[List[str]] = [],
+    features_to_apply: list[str] | None = [],
     **kwargs,
-) -> Dict[str, torch.Tensor]:
+) -> dict[str, torch.Tensor]:
     # Given a batch or row, convert all fields to torch tensors. Uses the field type map to determine the dtype, defaulting to torch.long
     # if no dtype is specified.
     for k, v in batch_or_row.items():
@@ -99,7 +99,7 @@ def convert_fields_to_tensors(
     return batch_or_row
 
 
-def filter_sequence_length_row(row: Dict[str, torch.Tensor], dataset_config: BaseDatasetConfig, features_to_apply: Optional[List[str]] = [], **kwargs) -> Dict[str, np.ndarray]:  # type: ignore
+def filter_sequence_length_row(row: dict[str, torch.Tensor], dataset_config: BaseDatasetConfig, features_to_apply: list[str] | None = [], **kwargs) -> dict[str, np.ndarray]:  # type: ignore
     # Only works for a row right now. This filters out rows that have fields with sequence length smaller than the min threshold.
     # TODO(lneves): Make this work for a batch as well without creating batches of different sizes.
     for _, tensor in row.items():
@@ -108,7 +108,7 @@ def filter_sequence_length_row(row: Dict[str, torch.Tensor], dataset_config: Bas
     return row
 
 
-def filter_empty_feature(row: Dict[str, torch.Tensor], dataset_config: BaseDatasetConfig, features_to_apply: Optional[List[str]] = [], **kwargs) -> Dict[str, np.ndarray]:  # type: ignore
+def filter_empty_feature(row: dict[str, torch.Tensor], dataset_config: BaseDatasetConfig, features_to_apply: list[str] | None = [], **kwargs) -> dict[str, np.ndarray]:  # type: ignore
     # Only works for a row right now. This filters out rows that have fields with empty tensors.
     for k, v in row.items():
         if is_feature_in_features_to_apply(features_to_apply, k):
@@ -118,12 +118,12 @@ def filter_empty_feature(row: Dict[str, torch.Tensor], dataset_config: BaseDatas
 
 
 def map_sparse_id_to_semantic_id(
-    row: Dict[str, torch.Tensor],
+    row: dict[str, torch.Tensor],
     dataset_config: SemanticIDDatasetConfig,
-    features_to_apply: Optional[List[str]] = [],
-    num_hierarchies: Optional[int] = None,
+    features_to_apply: list[str] | None = [],
+    num_hierarchies: int | None = None,
     **kwargs,
-) -> Dict[str, torch.Tensor]:
+) -> dict[str, torch.Tensor]:
     """
     Given a row of data, maps the sparse ids to semantic ids
     based on the id_map in the dataset config.
@@ -150,13 +150,13 @@ def map_sparse_id_to_semantic_id(
 
 
 def trim_sequence_row(
-    row: Dict[str, Any],
+    row: dict[str, Any],
     dataset_config: BaseDatasetConfig,
     sequence_length: int,
     should_trim_left: bool,
-    features_to_apply: Optional[List[str]] = [],
+    features_to_apply: list[str] | None = [],
     **kwargs,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Trim the sequences in the row to the sequence_length.
 
@@ -194,11 +194,11 @@ def trim_sequence_row(
     return row
 
 def tokenize_text_features(
-    batch_or_row: Dict[str, Any],
-    features_to_apply: Optional[List[str]] = [],
-    tokenizer_config: Optional[TokenizerConfig] = None,
+    batch_or_row: dict[str, Any],
+    features_to_apply: list[str] | None = [],
+    tokenizer_config: TokenizerConfig | None = None,
     **kwargs,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     # Tokenize text features. features_to_apply must contain only text features.
     # This works for both rows and batches.
     tokenize = load_tokenize(config=tokenizer_config)
@@ -228,11 +228,11 @@ def tokenize_text_features(
 
 
 def preprocess_categorical_feature_to_idx(
-    batch_or_row: Dict[str, Any],
-    features_to_apply: Optional[List[str]] = [],
-    mapping_file: Optional[str] = "",
+    batch_or_row: dict[str, Any],
+    features_to_apply: list[str] | None = [],
+    mapping_file: str | None = "",
     **kwargs,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     # Translate categorical features to indices by looking at the mapping provided.
     # features_to_apply must contain name of the categorical features whose mapping is available in the mapping_file.
     # This works for both rows and batches.
@@ -244,7 +244,7 @@ def preprocess_categorical_feature_to_idx(
         raise ValueError("A valid path to the mapping file must be provided.")
 
     # Helper function to translate feature values to index
-    def translate_to_index(value: Union[str, List[str]]) -> Union[int, List[int]]:
+    def translate_to_index(value: str | list[str]) -> int | list[int]:
         if isinstance(value, list):
             return [
                 category_to_idx.get(v, 0) for v in value
@@ -272,13 +272,13 @@ def preprocess_categorical_feature_to_idx(
 
 
 def map_sparse_id_to_embedding(
-    row: Dict[str, Any],
+    row: dict[str, Any],
     dataset_config = None,
-    features_to_apply: Optional[List[str]] = [],
+    features_to_apply: list[str] | None = [],
     sparse_id_field: str = "id",
     embedding_field_to_add: str = "embedding",
     **kwargs,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     # Map sparse id to pre-computed embedding
 
     embedding_map: torch.Tensor = dataset_config.embedding_map.get(
@@ -290,15 +290,15 @@ def map_sparse_id_to_embedding(
     if embedding_map is not None:
         row[embedding_field_to_add] = embedding_map[row[sparse_id_field]].squeeze()
     else:
-        raise ValueError(f"Embedding map not found")
+        raise ValueError("Embedding map not found")
     return row
 
 
 def squeeze_tensor_in_place(
-    batch_or_row: Dict[str, Any],
-    features_to_apply: Optional[List[str]] = [],
+    batch_or_row: dict[str, Any],
+    features_to_apply: list[str] | None = [],
     **kwargs,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     # Squeeze the dimensions of the features to apply
     # This squeeze is done in place, it does not create a new tensor
     for k, v in batch_or_row.items():
